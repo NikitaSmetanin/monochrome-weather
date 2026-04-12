@@ -52,21 +52,18 @@ useEffect(() => {
 
         try {
           const res = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?latitude=${lat}&longitude=${lon}&count=1&language=en`
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
           );
           if (res.ok) {
             const data = await res.json();
-            if (data.results && data.results.length > 0) {
-              const r = data.results[0];
-              geoCity = {
-                name: r.name,
-                country: r.country || "",
-                countryCode: r.country_code || "",
-                latitude: lat,
-                longitude: lon,
-                admin1: r.admin1,
-              };
-            }
+            geoCity = {
+              name: data.city || data.locality || data.localityInfo?.administrative?.[2]?.name || "Your Location",
+              country: data.countryName || "",
+              countryCode: data.countryCode || "",
+              latitude: lat,
+              longitude: lon,
+              admin1: data.principalSubdivision || data.localityInfo?.administrative?.[1]?.name,
+            };
           }
         } catch {
           // Keep "Your Location" as fallback
