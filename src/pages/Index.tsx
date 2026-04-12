@@ -33,38 +33,58 @@ export default function Index() {
     }
   }, []);
 
-  // Try geolocation on mount
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const geoCity: GeoCity = {
-            name: "Your Location",
-            country: "",
-            countryCode: "",
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          };
-          // Try to reverse geocode using open-meteo
-          try {
-            const res = await fetch(
-              `https://geocoding-api.open-meteo.com/v1/search?name=&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&count=1`
-            );
-            // Fallback: just use coordinates
-          } catch {}
-          setCity(geoCity);
-          loadWeather(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          // Geolocation denied, use default
-          loadWeather(DEFAULT_CITY.latitude, DEFAULT_CITY.longitude);
-        },
-        { timeout: 5000 }
-      );
-    } else {
-      loadWeather(DEFAULT_CITY.latitude, DEFAULT_CITY.longitude);
-    }
-  }, [loadWeather]);
+// Try geolocation on mount
+useEffect(() => {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        // Try to reverse geocode using open-meteo
+        let geoCity: GeoCity = {
+          name: "Your Location",
+          country: "",
+          countryCode: "",
+          latitude: lat,
+          longitude: lon,
+        };
+
+        try {
+          const res = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?latitude=${lat}&longitude=${lon}&count=1&language=en`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              const r = data.results[0];
+              geoCity = {
+                name: r.name,
+                country: r.country || "",
+                countryCode: r.country_code || "",
+                latitude: lat,
+                longitude: lon,
+                admin1: r.admin1,
+              };
+            }
+          }
+        } catch {
+          // Keep "Your Location" as fallback
+        }
+
+        setCity(geoCity);
+        loadWeather(lat, lon);
+      },
+      () => {
+        // Geolocation denied, use default
+        loadWeather(DEFAULT_CITY.latitude, DEFAULT_CITY.longitude);
+      },
+      { timeout: 5000 }
+    );
+  } else {
+    loadWeather(DEFAULT_CITY.latitude, DEFAULT_CITY.longitude);
+  }
+}, [loadWeather]);
 
   const handleCitySelect = (newCity: GeoCity) => {
     setCity(newCity);
