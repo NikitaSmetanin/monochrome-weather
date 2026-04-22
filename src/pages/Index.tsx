@@ -3,6 +3,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CitySearch } from "@/components/CitySearch";
 import { WeatherDisplay } from "@/components/WeatherDisplay";
 import { ClothingRecommendation } from "@/components/ClothingRecommendation";
+import { DailyForecast } from "@/components/DailyForecast";
 import { fetchWeather, WeatherData, GeoCity } from "@/lib/weather";
 import { Loader2 } from "lucide-react";
 
@@ -120,6 +121,7 @@ useEffect(() => {
               cityName={city.name + (city.country ? `, ${city.country}` : "")}
             />
             <ClothingRecommendation weather={weather} />
+            <DailyForecast days={weather.daily} />
           </>
         )}
       </main>
