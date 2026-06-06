@@ -121,6 +121,7 @@ useEffect(() => {
               weather={weather}
               cityName={city.name + (city.country ? `, ${city.country}` : "")}
             />
+            <HourlyForecast hours={weather.hourly} />
             <ClothingRecommendation weather={weather} />
             <DailyForecast days={weather.daily} />
           </>
