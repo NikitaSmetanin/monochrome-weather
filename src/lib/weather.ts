@@ -8,6 +8,7 @@ export interface WeatherData {
   sunrise: string;
   sunset: string;
   daily: DailyForecast[];
+  hourly: HourlyForecast[];
 }
 
 export interface DailyForecast {
@@ -15,6 +16,12 @@ export interface DailyForecast {
   weatherCode: number;
   tempMax: number;
   tempMin: number;
+}
+
+export interface HourlyForecast {
+  time: string;
+  temperature: number;
+  weatherCode: number;
 }
 
 export interface GeoCity {
@@ -75,7 +82,7 @@ export function isWindy(windSpeed: number): boolean {
 
 export async function fetchWeather(lat: number, lon: number): Promise<WeatherData> {
   const res = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=10`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&hourly=temperature_2m,weather_code&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=2`
   );
   if (!res.ok) throw new Error("Failed to fetch weather");
   const data = await res.json();
@@ -85,6 +92,20 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherDat
     tempMax: Math.round(data.daily.temperature_2m_max[i]),
     tempMin: Math.round(data.daily.temperature_2m_min[i]),
   }));
+
+  const now = new Date();
+  const hourly: HourlyForecast[] = [];
+  for (let i = 0; i < data.hourly.time.length; i++) {
+    const t = new Date(data.hourly.time[i]);
+    if (t >= now && hourly.length < 24) {
+      hourly.push({
+        time: data.hourly.time[i],
+        temperature: Math.round(data.hourly.temperature_2m[i]),
+        weatherCode: data.hourly.weather_code[i],
+      });
+    }
+  }
+
   return {
     temperature: Math.round(data.current.temperature_2m),
     feelsLike: Math.round(data.current.apparent_temperature),
@@ -95,6 +116,7 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherDat
     sunrise: data.daily.sunrise[0],
     sunset: data.daily.sunset[0],
     daily,
+    hourly,
   };
 }
 
